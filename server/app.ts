@@ -6,6 +6,7 @@ import { sendMessages } from "../src/lib/messages.ts";
 import {
   clearedSessionCookie,
   createSessionStore,
+  createSignedSessionStore,
   readSessionId,
   sessionCookie,
   type SessionStore,
@@ -29,6 +30,7 @@ export type MailerAppOptions = {
   sessions?: SessionStore;
   now?: () => Date;
   secureCookies?: boolean;
+  signInDisabled?: boolean;
 };
 
 function clientKey(req: Request): string {
@@ -95,6 +97,17 @@ export function createApp(options: MailerAppOptions): Express {
   }
 
   app.post("/api/auth/login", (req, res) => {
+    if (options.signInDisabled) {
+      res.status(503).json({
+        success: false,
+        error: {
+          code: "AUTH_UNAVAILABLE",
+          message: sendMessages.signInUnavailable,
+        },
+      });
+      return;
+    }
+
     if (!loginLimiter.allow(`login:${clientKey(req)}`)) {
       res.status(429).json({
         success: false,
@@ -223,6 +236,8 @@ export function createProductionApp(input: {
   nodeEnv: string;
   websiteUrl?: string;
   campusImpactUrl?: string;
+  sessionSecret?: string;
+  requirePersistentSession?: boolean;
   beforeSend?: (outreach: ValidatedOutreach) => {
     provider: EmailProvider;
     assetBaseUrl?: string;
@@ -233,11 +248,17 @@ export function createProductionApp(input: {
 }): Express {
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
   const clientIndex = path.join(root, "dist", "index.html");
+  const sessionSecret = input.sessionSecret?.trim() ?? "";
+  if (input.requirePersistentSession && !sessionSecret) {
+    console.error("SESSION_SECRET is missing. Passcode login will not persist on Vercel.");
+  }
   return createApp({
     providerName: input.providerName,
     allowedOrigins: input.allowedOrigins,
     trustProxy: input.trustProxy,
     secureCookies: input.nodeEnv === "production",
+    signInDisabled: input.requirePersistentSession === true && !sessionSecret,
+    sessions: sessionSecret ? createSignedSessionStore(sessionSecret) : createSessionStore(),
     assetsDir: path.join(root, "public", "assets"),
     clientDir: input.nodeEnv === "production" && fs.existsSync(clientIndex) ? path.join(root, "dist") : undefined,
     send: (outreach) => {

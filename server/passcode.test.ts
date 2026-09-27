@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { describe, it } from "node:test";
-import { createSessionStore } from "./auth/sessions.ts";
+import { createSessionStore, createSignedSessionStore } from "./auth/sessions.ts";
 import { dailyPasscode, passcodeMatches } from "./utils/passcode.ts";
 
 describe("daily passcode", () => {
@@ -38,5 +38,18 @@ describe("session store", () => {
     const next = sessions.create();
     now = 1_600;
     assert.equal(sessions.has(next), false);
+  });
+
+  it("accepts a signed session on another store with the same secret", () => {
+    let now = 1_000;
+    const issued = createSignedSessionStore("same-secret", { ttlMs: 500, now: () => now });
+    const checked = createSignedSessionStore("same-secret", { ttlMs: 500, now: () => now });
+    const other = createSignedSessionStore("other-secret", { ttlMs: 500, now: () => now });
+    const token = issued.create();
+    assert.equal(checked.has(token), true);
+    assert.equal(other.has(token), false);
+    assert.equal(checked.has(`${token}x`), false);
+    now = 1_600;
+    assert.equal(checked.has(token), false);
   });
 });

@@ -62,7 +62,8 @@ Copy `.env.example` to `.env` and fill in the server values. Do not commit `.env
 | `CAREERLENS_CAMPUS_IMPACT` | Server | Campus impact link. Defaults to `https://www.career-lens.in/campus-impact`. |
 | `CAREERLENS_ASSET_BASE_URL` | Server | Public HTTPS origin that serves `/assets`. Required before a real send. |
 | `FRONTEND_ORIGIN` | Server | Browser origins allowed by CORS. Comma-separated. Production uses only this list. |
-| `TRUST_PROXY` | Server | `true` only behind one trusted reverse proxy, so the rate limit sees the client address. Leave `false` otherwise. |
+| `TRUST_PROXY` | Server | `true` only behind one trusted reverse proxy, so the rate limit sees the client address. Leave `false` otherwise. Vercel sets this on its own. |
+| `SESSION_SECRET` | Server | Long random string. Required on Vercel. Leave empty for local development. |
 | `VITE_API_BASE_URL` | Frontend | Public API origin baked into the frontend build. Leave empty when the UI and API share an origin. |
 
 ## Public assets
@@ -131,13 +132,33 @@ npm start
 
 `npm start` runs the API. When `NODE_ENV=production` and `dist/index.html` exists, the same process also serves the built frontend. For a split deployment, host `dist/` yourself and set `VITE_API_BASE_URL` to the public API origin **before** `npm run build`.
 
-No hosting provider is assumed. Put the app behind HTTPS. Set `TRUST_PROXY=true` only when a reverse proxy you control is the single hop in front of the API.
+## Vercel
+
+Vercel can host the site and the API together. Gmail SMTP stays on port 587. Create a Vercel project from this repo and leave the build command as `npm run vercel-build`.
+
+Set these in the Vercel project, not in the frontend:
+
+- `EMAIL_PROVIDER=smtp`
+- `FROM_EMAIL=info@career-lens.in`
+- `FROM_NAME=CareerLens India`
+- `SMTP_HOST=smtp.gmail.com`
+- `SMTP_PORT=587`
+- `SMTP_SECURE=false`
+- `SMTP_USER=careerlensindia@gmail.com`
+- `SMTP_PASSWORD` copied from the host secret store
+- `CAREERLENS_ASSET_BASE_URL=https://raw.githubusercontent.com/career-lens-india/college-mailer/master/public`
+- `CAREERLENS_WEBSITE=https://www.career-lens.in`
+- `CAREERLENS_CAMPUS_IMPACT=https://www.career-lens.in/campus-impact`
+- `SESSION_SECRET` set to a long random string
+- `VITE_API_BASE_URL` left empty
+
+Leave `FRONTEND_ORIGIN` empty when the page and API share one Vercel domain. After deploy, point `mailer.career-lens.in` at that project.
 
 ## Current limitations
 
 - One manual send at a time. A comma-separated list is delivered as separate private emails, not one shared To line
 - Custom Email is a plain-text message with optional CareerLens branding, not a fifth fixed design
-- No database. The daily passcode session lives in memory on this server process
+- No database. Locally, the passcode session lives in memory on this server process. On Vercel it is a signed cookie, so `SESSION_SECRET` is required
 - Sign-in is today's date in India, entered as DDMMYYYY. The server checks it and sets an HTTP-only session cookie
 - No CRM
 - No bulk campaigns

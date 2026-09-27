@@ -9,6 +9,7 @@ export const sendMessages = {
   loginRateLimited: "Too many attempts. Please wait a moment and try again.",
   passcodeIncorrect: "Incorrect passcode. Please try again.",
   unauthorized: "Please sign in to continue.",
+  signInUnavailable: "Sign-in is not configured yet.",
   tryAgain: "Unable to send the email. Please try again.",
   invalidRequest: "The email request is not valid.",
   emailInvalid: "Please enter a valid email address.",

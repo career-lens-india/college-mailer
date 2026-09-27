@@ -9,7 +9,10 @@ lerna-debug.log*
 
 node_modules
 dist
+dist-server
 dist-ssr
+public/index.html
+public/assets/index-*
 *.local
 .env
 .env.*

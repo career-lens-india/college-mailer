@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import type { Server } from "node:http";
 import { after, before, describe, it } from "node:test";
 import { createApp } from "./app.ts";
+import { createSignedSessionStore } from "./auth/sessions.ts";
 import { sendMessages } from "../src/lib/messages.ts";
 import { createRateLimiter } from "./utils/rateLimit.ts";
 
@@ -164,6 +165,75 @@ describe("login rate limit", () => {
       assert.equal(limited.status, 429);
       assert.equal(body.error.code, "RATE_LIMITED");
       assert.equal(body.error.message, sendMessages.loginRateLimited);
+      assert.equal(JSON.stringify(body).includes(passcode), false);
+    } finally {
+      await new Promise<void>((resolve, reject) => {
+        running.server.close((error) => (error ? reject(error) : resolve()));
+      });
+    }
+  });
+});
+
+describe("signed session across processes", () => {
+  it("accepts the login cookie on a second server with the same secret", async () => {
+    const secret = "signed-session-test-secret";
+    const make = () =>
+      createApp({
+        providerName: "smtp",
+        allowedOrigins: [],
+        now: fixedNow,
+        secureCookies: true,
+        sessions: createSignedSessionStore(secret),
+        send: async () => ({ sent: 0, total: 0, results: [] }),
+      });
+    const first = await listen(make());
+    const second = await listen(make());
+    try {
+      const login = await fetch(`${first.base}/api/auth/login`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ passcode }),
+      });
+      assert.equal(login.status, 200);
+      const session = await fetch(`${second.base}/api/auth/session`, {
+        headers: { cookie: cookiePair(login) },
+      });
+      assert.deepEqual(await session.json(), { authenticated: true });
+      const tampered = await fetch(`${second.base}/api/auth/session`, {
+        headers: { cookie: "careerlens_session=tampered" },
+      });
+      assert.deepEqual(await tampered.json(), { authenticated: false });
+    } finally {
+      await Promise.all(
+        [first.server, second.server].map(
+          (running) =>
+            new Promise<void>((resolve, reject) => {
+              running.close((error) => (error ? reject(error) : resolve()));
+            }),
+        ),
+      );
+    }
+  });
+
+  it("refuses login when sign-in is disabled", async () => {
+    const app = createApp({
+      providerName: "smtp",
+      allowedOrigins: [],
+      now: fixedNow,
+      signInDisabled: true,
+      send: async () => ({ sent: 0, total: 0, results: [] }),
+    });
+    const running = await listen(app);
+    try {
+      const response = await fetch(`${running.base}/api/auth/login`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ passcode }),
+      });
+      const body = await response.json();
+      assert.equal(response.status, 503);
+      assert.equal(body.error.code, "AUTH_UNAVAILABLE");
+      assert.equal(body.error.message, sendMessages.signInUnavailable);
       assert.equal(JSON.stringify(body).includes(passcode), false);
     } finally {
       await new Promise<void>((resolve, reject) => {

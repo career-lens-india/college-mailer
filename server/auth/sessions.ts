@@ -1,4 +1,4 @@
-import { randomBytes } from "node:crypto";
+import { createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 
 export const SESSION_COOKIE = "careerlens_session";
 const DEFAULT_TTL_MS = 12 * 60 * 60 * 1000;
@@ -8,6 +8,42 @@ export type SessionStore = {
   has(id: string): boolean;
   destroy(id: string): void;
 };
+
+export function createSignedSessionStore(
+  secret: string,
+  options?: { ttlMs?: number; now?: () => number },
+): SessionStore {
+  const ttlMs = options?.ttlMs ?? DEFAULT_TTL_MS;
+  const now = options?.now ?? Date.now;
+
+  function sign(payload: string): string {
+    return createHmac("sha256", secret).update(payload).digest("base64url");
+  }
+
+  return {
+    create() {
+      const exp = now() + ttlMs;
+      const nonce = randomBytes(16).toString("base64url");
+      const payload = `${exp}.${nonce}`;
+      return `${payload}.${sign(payload)}`;
+    },
+    has(id: string) {
+      const parts = id.split(".");
+      if (parts.length !== 3) return false;
+      const [expText, nonce, mac] = parts;
+      if (!expText || !nonce || !mac) return false;
+      const expected = sign(`${expText}.${nonce}`);
+      const actual = Buffer.from(mac);
+      const valid = Buffer.from(expected);
+      if (actual.length !== valid.length || !timingSafeEqual(actual, valid)) return false;
+      const exp = Number(expText);
+      return Number.isFinite(exp) && now() <= exp;
+    },
+    destroy(id: string) {
+      void id;
+    },
+  };
+}
 
 export function createSessionStore(options?: { ttlMs?: number; now?: () => number }): SessionStore {
   const ttlMs = options?.ttlMs ?? DEFAULT_TTL_MS;

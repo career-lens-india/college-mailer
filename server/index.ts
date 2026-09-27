@@ -63,11 +63,13 @@ const app = createProductionApp({
   provider: createProvider(startup.providerName, startup),
   providerName: startup.providerName,
   allowedOrigins: startup.allowedOrigins,
-  trustProxy: startup.trustProxy,
+  trustProxy: startup.trustProxy || Boolean(process.env.VERCEL),
   assetBaseUrl: startup.assetBaseUrl,
   nodeEnv: startup.nodeEnv,
   websiteUrl: startup.websiteUrl,
   campusImpactUrl: startup.campusImpactUrl,
+  sessionSecret: startup.sessionSecret,
+  requirePersistentSession: Boolean(process.env.VERCEL),
   beforeSend: (outreach) => {
     loadEnvFile();
     const current = loadConfig();
@@ -84,12 +86,22 @@ const app = createProductionApp({
   },
 });
 
-app.listen(startup.port, () => {
-  console.log(`CareerLens College Mailer API listening on port ${startup.port}`);
+export default app;
+
+function logMailConfiguration(): void {
   console.log(
     `Mail configuration: from=${startup.smtp.fromEmail || "missing"} smtpUser=${startup.smtp.user || "missing"} asset=${assetLabel(startup.assetBaseUrl)} password=${startup.smtp.password ? "configured" : "missing"}`,
   );
   if (startup.providerName === "smtp") {
     void verifySmtpConfiguration(startup.smtp);
   }
-});
+}
+
+if (process.env.VERCEL) {
+  logMailConfiguration();
+} else {
+  app.listen(startup.port, () => {
+    console.log(`CareerLens College Mailer API listening on port ${startup.port}`);
+    logMailConfiguration();
+  });
+}

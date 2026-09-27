@@ -7,6 +7,7 @@ export type AppConfig = {
   assetBaseUrl?: string;
   websiteUrl?: string;
   campusImpactUrl?: string;
+  sessionSecret: string;
   smtp: {
     host: string;
     port: number;
@@ -52,6 +53,7 @@ export function loadConfig(): AppConfig {
     assetBaseUrl: text("CAREERLENS_ASSET_BASE_URL") || undefined,
     websiteUrl: text("CAREERLENS_WEBSITE") || undefined,
     campusImpactUrl: text("CAREERLENS_CAMPUS_IMPACT") || undefined,
+    sessionSecret: text("SESSION_SECRET"),
     smtp: {
       host: text("SMTP_HOST"),
       port: portNumber("SMTP_PORT", 587),
