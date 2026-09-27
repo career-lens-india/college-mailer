@@ -1,0 +1,38 @@
+{
+  "name": "careerlens-college-mailer",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently -k -n web,api -c cyan,green \"npm run dev:client\" \"npm run dev:server\"",
+    "dev:client": "vite",
+    "dev:server": "tsx watch --tsconfig tsconfig.server.json server/index.ts",
+    "build": "tsc -b && vite build",
+    "typecheck": "tsc -b --pretty false && tsc -p tsconfig.server.json --pretty false",
+    "lint": "oxlint",
+    "start": "tsx --tsconfig tsconfig.server.json server/index.ts",
+    "test": "tsx --tsconfig tsconfig.server.json --test server/validateSendRequest.test.ts server/render.test.ts server/delivery.test.ts server/api.test.ts server/form.test.ts server/workflow.test.ts server/composer.test.ts server/passcode.test.ts server/auth.test.ts server/templateContent.test.ts",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "express": "^5.2.1",
+    "nodemailer": "^10.0.10",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/express": "^5.0.6",
+    "@types/node": "^24.13.3",
+    "@types/nodemailer": "^8.0.2",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "@vitejs/plugin-react": "^6.1.1",
+    "concurrently": "^10.0.5",
+    "oxlint": "^1.81.0",
+    "tailwindcss": "^4.3.3",
+    "tsx": "^4.23.15",
+    "typescript": "~6.0.2",
+    "vite": "^8.3.0"
+  }
+}
