@@ -15,6 +15,7 @@ import { errorHandler, notFound } from "./middleware/errors.ts";
 import type { EmailProvider } from "./services/providers/types.ts";
 import { deliverOutreach, type DeliveryResult } from "./services/emailService.ts";
 import { dailyPasscode, passcodeMatches } from "./utils/passcode.ts";
+import { readJsonBody } from "./utils/jsonBody.ts";
 import { createRateLimiter, type RateLimiter } from "./utils/rateLimit.ts";
 import { validateSendRequest, type ValidatedOutreach } from "./utils/validateSendRequest.ts";
 
@@ -35,6 +36,23 @@ export type MailerAppOptions = {
 
 function clientKey(req: Request): string {
   return req.ip || req.socket.remoteAddress || "unknown";
+}
+
+function enteredPasscode(body: unknown): string {
+  if (!body || typeof body !== "object") return "";
+  const value = (body as { passcode?: unknown }).passcode;
+  if (typeof value === "string") return value.trim();
+  if (typeof value === "number" && Number.isSafeInteger(value)) return String(value);
+  return "";
+}
+
+function indiaDateLabel(date: Date): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Kolkata",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(date);
 }
 
 export function createApp(options: MailerAppOptions): Express {
@@ -59,7 +77,7 @@ export function createApp(options: MailerAppOptions): Express {
     next();
   });
 
-  app.use(express.json({ limit: "32kb" }));
+  app.use(readJsonBody);
 
   if (options.assetsDir) {
     app.use("/assets", express.static(options.assetsDir, { index: false }));
@@ -119,9 +137,10 @@ export function createApp(options: MailerAppOptions): Express {
       return;
     }
 
-    const passcode = typeof req.body?.passcode === "string" ? req.body.passcode.trim() : "";
+    const passcode = enteredPasscode(req.body);
     const expected = dailyPasscode(now());
     if (!/^\d{8}$/.test(passcode) || !passcodeMatches(passcode, expected)) {
+      console.error(`Login rejected. passcodeLength=${passcode.length} indiaDate=${indiaDateLabel(now())}`);
       res.status(401).json({
         success: false,
         error: {

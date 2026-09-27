@@ -1,8 +1,10 @@
 import assert from "node:assert/strict";
 import type { Server } from "node:http";
 import { after, before, describe, it } from "node:test";
+import { Readable } from "node:stream";
 import { createApp } from "./app.ts";
 import { createSignedSessionStore } from "./auth/sessions.ts";
+import { readJsonBody } from "./utils/jsonBody.ts";
 import { sendMessages } from "../src/lib/messages.ts";
 import { createRateLimiter } from "./utils/rateLimit.ts";
 
@@ -171,6 +173,29 @@ describe("login rate limit", () => {
         running.server.close((error) => (error ? reject(error) : resolve()));
       });
     }
+  });
+});
+
+describe("json body", () => {
+  it("keeps a body that the platform already parsed", () => {
+    const req = Readable.from([]) as Readable & { method: string; body: unknown };
+    req.method = "POST";
+    req.body = { passcode: "27092026" };
+    let called = false;
+    readJsonBody(req as never, {} as never, () => {
+      called = true;
+    });
+    assert.equal(called, true);
+    assert.deepEqual(req.body, { passcode: "27092026" });
+  });
+
+  it("reads a JSON stream when no body was parsed yet", async () => {
+    const req = Readable.from([Buffer.from('{"to":"hod@example.edu"}')]) as Readable & { method: string; body: unknown };
+    req.method = "POST";
+    await new Promise<void>((resolve, reject) => {
+      readJsonBody(req as never, {} as never, (error?: unknown) => (error ? reject(error) : resolve()));
+    });
+    assert.deepEqual(req.body, { to: "hod@example.edu" });
   });
 });
 
