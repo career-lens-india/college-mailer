@@ -1,3 +1,4 @@
+import { existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { AppError } from "./errors.ts";
 import { sendMessages } from "../src/lib/messages.ts";
@@ -22,6 +23,7 @@ const ENV_KEYS = [
 
 function loadEnvFile(): void {
   const envPath = fileURLToPath(new URL("../.env", import.meta.url));
+  if (!existsSync(envPath)) return;
   for (const key of ENV_KEYS) delete process.env[key];
   try {
     process.loadEnvFile(envPath);
