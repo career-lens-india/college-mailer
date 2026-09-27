@@ -223,6 +223,13 @@ export function createProductionApp(input: {
   nodeEnv: string;
   websiteUrl?: string;
   campusImpactUrl?: string;
+  beforeSend?: (outreach: ValidatedOutreach) => {
+    provider: EmailProvider;
+    assetBaseUrl?: string;
+    nodeEnv: string;
+    websiteUrl?: string;
+    campusImpactUrl?: string;
+  };
 }): Express {
   const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
   const clientIndex = path.join(root, "dist", "index.html");
@@ -233,13 +240,15 @@ export function createProductionApp(input: {
     secureCookies: input.nodeEnv === "production",
     assetsDir: path.join(root, "public", "assets"),
     clientDir: input.nodeEnv === "production" && fs.existsSync(clientIndex) ? path.join(root, "dist") : undefined,
-    send: (outreach) =>
-      deliverOutreach(outreach, {
+    send: (outreach) => {
+      const delivery = input.beforeSend?.(outreach) ?? {
         provider: input.provider,
         assetBaseUrl: input.assetBaseUrl,
         nodeEnv: input.nodeEnv,
         websiteUrl: input.websiteUrl,
         campusImpactUrl: input.campusImpactUrl,
-      }),
+      };
+      return deliverOutreach(outreach, delivery);
+    },
   });
 }

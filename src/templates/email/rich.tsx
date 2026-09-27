@@ -557,7 +557,7 @@ export function CtaBand({
   );
 }
 
-export function MailFooter({ accent = TEAL }: { accent?: string }) {
+export function MailFooter({ accent = TEAL, showFounder = true }: { accent?: string; showFounder?: boolean }) {
   return (
     <tr>
       <td bgcolor="#f7f9fb" style={{ backgroundColor: "#f7f9fb", padding: "22px 22px 26px" }}>
@@ -577,6 +577,25 @@ export function MailFooter({ accent = TEAL }: { accent?: string }) {
         <p style={{ margin: "0 0 10px", fontFamily: FONT, fontSize: 13, lineHeight: "20px", color: MUTED }}>
           {brand.focus}
         </p>
+        {showFounder ? (
+          <>
+            <p
+              style={{
+                margin: "0 0 2px",
+                fontFamily: FONT,
+                fontSize: 13,
+                lineHeight: "20px",
+                fontWeight: 700,
+                color: NAVY,
+              }}
+            >
+              {brand.contactName}
+            </p>
+            <p style={{ margin: "0 0 10px", fontFamily: FONT, fontSize: 13, lineHeight: "20px", color: MUTED }}>
+              Founder
+            </p>
+          </>
+        ) : null}
         <p style={{ margin: "0 0 4px", fontFamily: FONT, fontSize: 13, lineHeight: "20px" }}>
           <a href={brand.phoneHref} style={{ color: accent, textDecoration: "none", fontWeight: 700 }}>
             {brand.phoneDisplay}

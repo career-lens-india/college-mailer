@@ -79,7 +79,7 @@ export function ProfessionalEmail({ data, embedded = false }: { data: EmailTempl
           href={brand.campusImpactUrl}
         />
         <AdditionalMessage text={content.additionalMessage} data={data} />
-        <MailFooter />
+        <MailFooter showFounder={false} />
         <tr>
           <td style={{ padding: "0 28px 18px", backgroundColor: "#f7f9fb", fontFamily: FONT, fontSize: 12, color: INK }}>
             <span style={{ color: NAVY }}>{brand.contactName}</span>

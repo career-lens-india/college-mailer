@@ -31,7 +31,7 @@ function toSafeProviderError(error: unknown): AppError {
   const code = details.code ?? "";
   const responseCode = details.responseCode ?? 0;
   const response = `${details.response ?? ""} ${details.message ?? ""}`.toLowerCase();
-  console.error("Email provider failed", { code, responseCode });
+  console.error(`Email provider failed. code=${code || "unknown"} responseCode=${responseCode || 0}`);
 
   if (code === "EAUTH" || responseCode === 535) {
     return new AppError(502, "EMAIL_AUTH_FAILED", sendMessages.notConfigured);

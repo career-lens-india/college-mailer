@@ -44,6 +44,7 @@ export function renderPlainText(
     ...(additionalMessage ? [additionalMessage, ""] : []),
     brand.name,
     brand.focus,
+    ...(template === "professional" ? [] : [brand.contactName, "Founder"]),
     brand.phoneDisplay,
     brand.email,
     links.websiteUrl,

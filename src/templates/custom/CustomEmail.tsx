@@ -75,7 +75,7 @@ export function CustomEmail({ data, embedded = false }: { data: EmailTemplateDat
             </td>
           </tr>
         ) : null}
-        {branding.footer ? <MailFooter /> : null}
+        {branding.footer ? <MailFooter showFounder={false} /> : null}
       </EmailContainer>
     </EmailDocument>
   );

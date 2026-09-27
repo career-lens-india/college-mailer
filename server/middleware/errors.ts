@@ -14,6 +14,7 @@ export function notFound(_req: Request, res: Response): void {
 
 export function errorHandler(error: unknown, _req: Request, res: Response, _next: NextFunction): void {
   if (isAppError(error)) {
+    console.error(`API ${error.status} ${error.code}: ${error.message}`);
     res.status(error.status).json({
       success: false,
       error: {

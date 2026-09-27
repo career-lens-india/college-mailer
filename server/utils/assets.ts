@@ -4,7 +4,7 @@ import { AppError } from "../errors.ts";
 export function resolveAssetBaseUrl(value: string | undefined, nodeEnv: string): string {
   const raw = value?.trim().replace(/\/+$/, "") ?? "";
   if (!raw) {
-    console.error("CAREERLENS_ASSET_BASE_URL is not set.");
+    console.error("Email send blocked: CAREERLENS_ASSET_BASE_URL is not set.");
     throw new AppError(503, "ASSET_BASE_URL_MISSING", sendMessages.notConfigured);
   }
 
@@ -12,7 +12,7 @@ export function resolveAssetBaseUrl(value: string | undefined, nodeEnv: string):
   try {
     url = new URL(raw);
   } catch {
-    console.error("CAREERLENS_ASSET_BASE_URL is not an absolute URL.");
+    console.error("Email send blocked: CAREERLENS_ASSET_BASE_URL is not an absolute URL.");
     throw new AppError(503, "ASSET_BASE_URL_MISSING", sendMessages.notConfigured);
   }
 
@@ -20,7 +20,7 @@ export function resolveAssetBaseUrl(value: string | undefined, nodeEnv: string):
   const localHost =
     host === "localhost" || host === "127.0.0.1" || host === "::1" || host.endsWith(".localhost");
   if (url.protocol !== "https:" || localHost) {
-    console.error(`CAREERLENS_ASSET_BASE_URL must be a public HTTPS origin (${nodeEnv}).`);
+    console.error(`Email send blocked: CAREERLENS_ASSET_BASE_URL must be a public HTTPS origin (${nodeEnv}).`);
     throw new AppError(503, "ASSET_BASE_URL_MISSING", sendMessages.notConfigured);
   }
 
@@ -40,7 +40,7 @@ export function assertDeliverableHtml(html: string): void {
     throw new AppError(500, "EMAIL_RENDER_FAILED", sendMessages.providerFailed);
   }
   if (/src="\/assets\//.test(html) || /src="assets\//.test(html) || /src="https?:\/\/[^"]*\/\/assets\//.test(html)) {
-    console.error("Rendered email has an unusable image URL.");
+    console.error("Email send blocked: rendered image URL is not publicly usable.");
     throw new AppError(503, "ASSET_BASE_URL_MISSING", sendMessages.notConfigured);
   }
 }
