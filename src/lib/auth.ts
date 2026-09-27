@@ -40,8 +40,8 @@ export async function login(passcode: string): Promise<void> {
 
   if (response.ok) return;
 
-  let message: string = sendMessages.passcodeIncorrect;
-  let code = "AUTH_FAILED";
+  let message: string = sendMessages.signInUnreachable;
+  let code = "NETWORK_ERROR";
   try {
     const body: unknown = await response.json();
     if (
@@ -54,7 +54,7 @@ export async function login(passcode: string): Promise<void> {
       message = (body as { error: { code: string; message: string } }).error.message;
     }
   } catch {
-    message = sendMessages.passcodeIncorrect;
+    message = sendMessages.signInUnreachable;
   }
   throw new AuthError(code, message);
 }

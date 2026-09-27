@@ -86,6 +86,9 @@ describe("email API", () => {
     assert.equal(response.status, 200);
     assert.deepEqual(body, { status: "ok", provider: "smtp" });
     assert.equal(JSON.stringify(body).includes("password"), false);
+    const alias = await fetch(`${base}/api/health`);
+    assert.equal(alias.status, 200);
+    assert.deepEqual(await alias.json(), { status: "ok", provider: "smtp" });
   });
 
   it("sends a valid request through the email service", async () => {

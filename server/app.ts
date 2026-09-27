@@ -83,12 +83,14 @@ export function createApp(options: MailerAppOptions): Express {
     app.use("/assets", express.static(options.assetsDir, { index: false }));
   }
 
-  app.get("/health", (_req, res) => {
+  const health = (_req: Request, res: Response) => {
     res.json({
       status: "ok",
       provider: options.providerName,
     });
-  });
+  };
+  app.get("/health", health);
+  app.get("/api/health", health);
 
   const limiter = options.rateLimiter ?? createRateLimiter({ windowMs: 10 * 60 * 1000, max: 8 });
   const loginLimiter = options.loginRateLimiter ?? createRateLimiter({ windowMs: 5 * 60 * 1000, max: 5 });
@@ -137,6 +139,7 @@ export function createApp(options: MailerAppOptions): Express {
       return;
     }
 
+    console.log(`Login request ${req.method} ${req.path}`);
     const passcode = enteredPasscode(req.body);
     const expected = dailyPasscode(now());
     if (!/^\d{8}$/.test(passcode) || !passcodeMatches(passcode, expected)) {

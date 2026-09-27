@@ -10,6 +10,7 @@ export const sendMessages = {
   passcodeIncorrect: "Incorrect passcode. Please try again.",
   unauthorized: "Please sign in to continue.",
   signInUnavailable: "Sign-in is not configured yet.",
+  signInUnreachable: "Sign-in is unavailable right now. Please try again.",
   tryAgain: "Unable to send the email. Please try again.",
   invalidRequest: "The email request is not valid.",
   emailInvalid: "Please enter a valid email address.",

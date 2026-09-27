@@ -134,7 +134,7 @@ npm start
 
 ## Vercel
 
-Vercel can host the site and the API together. Gmail SMTP stays on port 587. Create a Vercel project from this repo and leave the build command as `npm run vercel-build`.
+Vercel can host the site and the API together. Gmail SMTP stays on port 587. Create a Vercel project from this repo and leave the build command as `npm run vercel-build`. The `api` routes run the same Express app, including `/api/auth/login` and `/api/email/send`.
 
 Set these in the Vercel project, not in the frontend:
 
